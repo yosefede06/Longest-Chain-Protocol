@@ -1,0 +1,30 @@
+Exercise 2 - 67513 Introduction to Cryptocurrencies
+
+In this project, we have implemented nodes that operate according to the longest-chain protocol.
+The nodes function both as wallets and miners. When a node creates a transaction, it is immediately
+placed in its mempool and propagated to its neighbors.
+
+The main function of the class is to handle mined blocks from connected nodes.
+The method responsible for this is called "notify_of_block" and it's implementation is described in detail below:
+
+    - Step 1: We receive a blockHash from a node and apply the longest chain protocol.
+    To do this, we backtrack the node's chain/branch starting from the provided blockhash and search for the
+    intersect block of both nodes. We also count how many blocks appear on our branch from get_last_block_hash()
+    to the intersection. If the sender's branch is longer than ours, we move to step 2.
+
+    - Step 2: We check that the provided branch of blocks is valid. To do this, we deep copy the utxo of our node
+    and update it up to the intersect block. We save a mapping of txid's and object Transactions and each time we see
+    a transaction, we replace it with the mapping of its input transaction. By doing this, our time complexity will
+    be O(number of blocks from the intersect block to the last_block), which makes more sense than updating
+    the utxo from the beginning. We update the node's branch containing the first n valid blocks and recheck if the
+    node's branch is still longer than ours. If it is, we move to step 3. We also update our utxo copy with the new
+    seen block transactions while checking block validity.
+
+    - Step 3: Now that we know that the node's branch is longer than ours, we need to update our blockchain,
+    mempool, and utxo. Our blockchain will be the initial blockchain we were holding up to the intersection block,
+    plus the node's branch. Our utxo will be replaced with the copied utxo that we have updated.
+    For the mempool, we iterate through our old mempool and remove the transactions that conflict with the new
+    updated blockchain. Finally, we move to step 4.
+
+    - Step 4: We inform all our connected nodes about this new blockhash by calling the same method,
+     so that all connected nodes get synchronized with the blockchain and utxo.
